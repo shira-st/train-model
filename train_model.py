@@ -30,7 +30,7 @@ class CheckpointManager():
         return
 
     # restore model weights
-    def restore_model2(self, model, epoch, step):
+    def restore_model(self, model, epoch, step):
         path = self.ckpt_path.format(epoch=epoch, step=step, name="model")
         model.load_weights(path)
         return
@@ -94,7 +94,7 @@ class CheckpointManager():
         return
     
 
-def train_model(data, model, epochs, initial_epoch=0, initial_step=0, epoch_period=0, step_period=0, ckpt_dir="checkpoint"):
+def train_model(data, model, epochs, validation_data=None, initial_epoch=0, initial_step=0, epoch_period=0, step_period=0, ckpt_dir="checkpoint"):
     cm = CheckpointManager(ckpt_dir)
 
     iterator = iter(data)
@@ -102,7 +102,7 @@ def train_model(data, model, epochs, initial_epoch=0, initial_step=0, epoch_peri
     # restore the dataset and the model weights before creating callbacks
     if initial_epoch != 0 or initial_step != 0:
         cm.restore_iterator(iterator, initial_epoch, initial_step)
-        cm.restore_model2(model, initial_epoch, initial_step)
+        cm.restore_model(model, initial_epoch, initial_step)
 
     steps = len(data)
     callbacks = tf.keras.callbacks.CallbackList(add_history=True, add_progbar=True, model=model, epochs=epochs, steps=steps, verbose=True)
@@ -144,6 +144,12 @@ def train_model(data, model, epochs, initial_epoch=0, initial_step=0, epoch_peri
         # reset after the first epoch
         if initial_step != 0:
             initial_step = 0
+
+        # validation step
+        if validation_data:
+            val_logs = model.evaluate(validation_data, callbacks=callbacks, return_dict=True)
+            val_logs = {"val_" + name: val for name, val in val_logs.items()}
+            logs.update(val_logs)
 
         callbacks.on_epoch_end(epoch, logs)
 
