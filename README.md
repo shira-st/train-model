@@ -1,5 +1,13 @@
 # train_model
 
+Train a keras model
+- The result is the same as `model.fit()`.
+- The training process can be saved and restored.
+- The same result is obtained from wherever restarting the training process.
+
+## Example
+
+### Preparation
 ```python
 import numpy as np
 import tensorflow as tf
@@ -29,7 +37,7 @@ def create_sample_model():
     return model
 ```
 
-model.fit()
+### Training by `model.fit()`
 ```python
 seed = 0
 set_seed(seed)
@@ -54,7 +62,7 @@ Epoch 5/5
 {'loss': [2.1480836868286133, 1.9837868213653564, 1.8324090242385864, 1.812350869178772, 1.8041961193084717], 'accuracy': [0.5099999904632568, 0.49000000953674316, 0.49000000953674316, 0.49000000953674316, 0.5]}
 ```
 
-train_model()
+### Training by `train_model()`
 ```python
 seed = 0
 set_seed(seed)
@@ -81,7 +89,7 @@ Epoch 5/5
 {'loss': [2.1480836868286133, 1.9837868213653564, 1.8324090242385864, 1.812350869178772, 1.8041961193084717], 'accuracy': [0.5099999904632568, 0.49000000953674316, 0.49000000953674316, 0.49000000953674316, 0.5]}
 ```
 
-restore
+### Restart the training process
 ```python
 seed = 0
 set_seed(seed)
