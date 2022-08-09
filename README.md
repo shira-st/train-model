@@ -1,4 +1,4 @@
-# train_model
+# Save and restore training of a keras model
 
 Train a keras model
 - The result is the same as `model.fit()`.
