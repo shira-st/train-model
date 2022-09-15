@@ -6,8 +6,9 @@ tf.get_logger().setLevel("ERROR")
 
 
 class CheckpointManager():
-    def __init__(self, ckpt_dir):
+    def __init__(self, ckpt_dir, callback_variables={}):
         self.ckpt_path = os.path.join(ckpt_dir, "ckpt_{epoch:04d}_{step:04d}", "{name}")
+        self.callback_variables = callback_variables
 
     # save a dataset
     def save_iterator(self, iterator, epoch, step):
@@ -68,34 +69,34 @@ class CheckpointManager():
             logs[m1.name] = m1.result()
         return logs
 
-    # save a history
-    def save_history(self, callbacks, epoch, step):
-        path = self.ckpt_path.format(epoch=epoch, step=step, name="history.pkl")
-
-        # get a history object from callbacks
-        history = None
+    # save callbacks
+    def save_callbacks(self, callbacks, epoch, step):
+        path = self.ckpt_path.format(epoch=epoch, step=step, name="callbacks.pkl")
+        data = {}
         for callback in callbacks.callbacks:
-            if callback.__class__.__name__ == "History":
-                history = callback
-                break
-        joblib.dump({"epoch": history.epoch, "history": history.history}, path)
+            name = callback.__class__.__name__
+            if name in self.callback_variables.keys():
+                data[name] = {}
+                for a in self.callback_variables[name]:
+                    data[name][a] = getattr(callback, a)
+        joblib.dump(data, path)
         return
 
-    # restore a history
-    def restore_history(self, callbacks, epoch, step):
-        path = self.ckpt_path.format(epoch=epoch, step=step, name="history.pkl")
+    # restore callbacks
+    def restore_callbacks(self, callbacks, epoch, step):
+        path = self.ckpt_path.format(epoch=epoch, step=step, name="callbacks.pkl")
         restored = joblib.load(path)
-
         for callback in callbacks.callbacks:
-            if callback.__class__.__name__ == "History":
-                callback.epoch = restored["epoch"]
-                callback.history = restored["history"]
-                break
+            name = callback.__class__.__name__
+            if name in restored.keys():
+                for k, v in restored[name].items():
+                    setattr(callback, k, v)
         return
     
 
-def train_model(data, model, epochs, validation_data=None, initial_epoch=0, initial_step=0, epoch_period=0, step_period=0, ckpt_dir="checkpoint"):
-    cm = CheckpointManager(ckpt_dir)
+def train_model(data, model, epochs, callbacks=None, callback_variables={}, validation_data=None, initial_epoch=0, initial_step=0, epoch_period=0, step_period=0, ckpt_dir="checkpoint"):
+    callback_variables["History"] = ["epoch", "history"]
+    cm = CheckpointManager(ckpt_dir, callback_variables)
 
     iterator = iter(data)
 
@@ -105,15 +106,15 @@ def train_model(data, model, epochs, validation_data=None, initial_epoch=0, init
         cm.restore_model(model, initial_epoch, initial_step)
 
     steps = len(data)
-    callbacks = tf.keras.callbacks.CallbackList(add_history=True, add_progbar=True, model=model, epochs=epochs, steps=steps, verbose=True)
+    callbacks = tf.keras.callbacks.CallbackList(callbacks=callbacks, add_history=True, add_progbar=True, model=model, epochs=epochs, steps=steps, verbose=True)
 
     callbacks.on_train_begin()
     train_fn = model.make_train_function()
 
     # restore the hisotry after calling callbacks.on_train_begin()
     if initial_epoch != 0 or initial_step != 0:
-        cm.restore_history(callbacks, initial_epoch, initial_step)
-
+        cm.restore_callbacks(callbacks, initial_epoch, initial_step)
+    
     logs = None
     for epoch in range(initial_epoch, epochs):
 
@@ -132,14 +133,14 @@ def train_model(data, model, epochs, validation_data=None, initial_epoch=0, init
             if initial_step != 0 and step == initial_step:
                 logs = cm.restore_metrics(model, initial_epoch, initial_step)
 
-            callbacks.on_train_batch_end(step + 1, logs)
+            callbacks.on_train_batch_end(step, logs)
             
             # save information every "epochs_period" epochs
             if step_period != 0 and (step + 1) % step_period == 0:
                 cm.save_iterator(iterator, epoch, step + 1)
                 cm.save_model(model, epoch, step + 1)
                 cm.save_metrics(model, epoch, step + 1)
-                cm.save_history(callbacks, epoch, step + 1)
+                cm.save_callbacks(callbacks, epoch, step + 1)
 
         # reset after the first epoch
         if initial_step != 0:
@@ -158,7 +159,7 @@ def train_model(data, model, epochs, validation_data=None, initial_epoch=0, init
             cm.save_iterator(iterator, epoch + 1, 0)
             cm.save_model(model, epoch + 1, 0)
             cm.save_metrics(model, epoch + 1, 0)
-            cm.save_history(callbacks, epoch + 1, 0)
+            cm.save_callbacks(callbacks, epoch + 1, 0)
 
     callbacks.on_train_end(logs=logs)
     return model.history

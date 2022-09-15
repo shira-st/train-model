@@ -111,3 +111,18 @@ Epoch 5/5
 10/10 [==============================] - 0s 798us/step - loss: 1.8042 - accuracy: 0.5000
 {'loss': [2.1480836868286133, 1.9837868213653564, 1.8324090242385864, 1.812350869178772, 1.8041961193084717], 'accuracy': [0.5099999904632568, 0.49000000953674316, 0.49000000953674316, 0.49000000953674316, 0.5]}
 ```
+
+### Note
+
+#### Callbacks
+You can use customize callbacks and save their states. \
+Please specify the names and the variables to save as follows.
+
+```python
+callbacks = MyCallback()
+callback_variables = {"MyCallback": ["variable1", "variable2"]}
+
+train_model(..., callbacks=callbacks, callback_variables=callback_variables, ...)
+```
+
+The variables `epoch` and `history` of the default callback `History` are saved without specification.
