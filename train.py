@@ -78,9 +78,9 @@ class CheckpointManager():
         data = {}
         for callback in callbacks.callbacks:
             name = callback.__class__.__name__
-            if name in self.callback_variables.keys():
+            if name in self.callback_attributes.keys():
                 data[name] = {}
-                for a in self.callback_variables[name]:
+                for a in self.callback_attributes[name]:
                     data[name][a] = getattr(callback, a)
         joblib.dump(data, ckpt_path)
         return
