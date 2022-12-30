@@ -103,7 +103,7 @@ class ModelTrainer():
     - model to train.
 
     callback_attributes
-    - Dictionary which shows attributes of callbacks to be stored and restored.
+    - Dictionary which shows attributes of callbacks to be saved and restored.
     - Each key is a class name of a callback.
     - Each value is a list of names of attributes.
 
