@@ -234,7 +234,7 @@ class ModelTrainer():
 
             # save states every epoch_period epochs
             if (
-                (epoch != 0)
+                (self.epoch_period != 0)
                 and ((epoch + 1) % self.epoch_period == 0)
             ):
                 self.ckpt_manager.save_iterator(
