@@ -123,14 +123,16 @@ class ModelTrainer():
     def __init__(
         self,
         model,
-        callback_attributes={"History": ["epoch", "history"]},
+        ckpt_dir,
+        callback_attributes={},
         initial_epoch=0,
         initial_step=0,
         epoch_period=0,
         step_period=0
     ):
         self.model = model
-        self.ckpt_manager = CheckpointManager(callback_attributes)
+        callback_attributes["History"] = ["epoch", "history"]
+        self.ckpt_manager = CheckpointManager(ckpt_dir, callback_attributes)
         self.initial_epoch = initial_epoch
         self.initial_step = initial_step
         self.epoch_period = epoch_period
