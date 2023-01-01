@@ -170,7 +170,7 @@ class ModelTrainer():
         callbacks.on_train_begin()
         train_fn = self.model.make_train_function()
 
-        # restore the hisotry after calling callbacks.on_train_begin()
+        # restore callbacks after calling on_train_begin
         if (self.initial_epoch != 0) or (self.initial_step != 0):
             self.ckpt_manager.restore_callbacks(
                 self.initial_epoch, self.initial_step, callbacks
